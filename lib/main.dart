@@ -2,7 +2,9 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:camera/camera.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
@@ -16,9 +18,7 @@ void main() => runApp(const MyApp());
 class MyApp extends StatelessWidget {
   //TODO: ResolutionPreset.max is not working
   //TODO: move to OpenAI
-  //TODO: create app icon
   //TODO: add GitHub link in About
-  //TODO: rename app
   //TODO: refactor to distinct classes
   //TODO: capture sound? flash screen instead of displaying status of capturing?
   const MyApp({super.key});
@@ -314,12 +314,14 @@ class CameraPageState extends State<CameraPage> with WidgetsBindingObserver {
     showDialog(
         context: context,
         builder: (context) {
-          return const AboutDialog(
-            applicationName: "Reimagine Cam",
-            applicationIcon: Icon(Icons.camera_alt),
-            applicationVersion: "1.0",
-            applicationLegalese: "© Copyright Daifuku Studio 2024",
-          );
+          return AboutDialog(
+              applicationName: "Reimagine Cam",
+              applicationIcon: SizedBox(
+                  width: 70,
+                  height: 70,
+                  child: Image.asset('assets/images/reimagine_cam.png')),
+              applicationVersion: "1.0",
+              applicationLegalese: "04/2024, by daifuku");
         });
   }
 
