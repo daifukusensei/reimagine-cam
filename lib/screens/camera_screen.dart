@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:reimagine_cam/services/clipdrop_service.dart';
 import 'package:reimagine_cam/services/settings_manager.dart';
 
 import 'about_screen.dart';
@@ -10,11 +10,8 @@ import 'settings_screen.dart';
 
 import 'package:camera/camera.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:http/http.dart' as http;
-import 'package:path_provider/path_provider.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:intl/intl.dart';
-import 'package:flutter_native_image/flutter_native_image.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -92,108 +89,6 @@ class CameraScreenState extends State<CameraScreen>
     }
   }
 
-  Future<String?> _uploadToClipDrop(String imagePath) async {
-    // Resize the image to fit within a 1024x1024 bounding box while preserving aspect ratio
-    final File downsizedImage = await _resizeImage(imagePath, 1024);
-
-    setState(() {
-      _processingStatus = 'Reimagining...';
-    });
-
-    //return downsizedImage.path;
-
-    // URL of Clipdrop's Reimagine API
-    String apiUrl = 'https://clipdrop-api.co/reimagine/v1/reimagine';
-
-    try {
-      // Create a multipart request
-      var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
-
-      // Add the API key header
-      request.headers['x-api-key'] = SettingsManager().getString('api_key');
-
-      // Add the downsized image file
-      request.files.add(
-          await http.MultipartFile.fromPath('image_file', downsizedImage.path));
-
-      // Send the request
-      var response = await request.send();
-
-      // Process reimagined image if the response is successful
-      if (response.statusCode == 200) {
-        // Read response bytes
-        List<int> bytes =
-            await response.stream.expand((chunk) => chunk).toList();
-
-        // Get the temporary directory
-        final Directory tempDir = await getTemporaryDirectory();
-
-        // Generate a unique filename using the current timestamp
-        String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-        var outputFile = File('${tempDir.path}/output_$timestamp.jpg');
-
-        // Save the response as a file in the temporary directory
-        await outputFile.writeAsBytes(bytes);
-
-        // Return the path of the saved image
-        return outputFile.path;
-      } else {
-        // Handle different status codes
-        if (response.statusCode == 400) {
-          _showAlert('Request is malformed or incomplete', 'Clipdrop Error');
-        } else if (response.statusCode == 401) {
-          _showAlert('Missing API key', 'Clipdrop Error');
-        } else if (response.statusCode == 402) {
-          _showAlert('Your account has no remaining credits', 'Clipdrop Error');
-        } else if (response.statusCode == 403) {
-          _showAlert('Invalid or revoked API key', 'Clipdrop Error');
-        } else if (response.statusCode == 429) {
-          _showAlert('Too many requests, blocked by the rate limiter',
-              'Clipdrop Error');
-        } else if (response.statusCode == 500) {
-          _showAlert('Server error, please try again later', 'Clipdrop Error');
-        } else {
-          _showAlert('An unexpected error occurred', 'Clipdrop Error');
-        }
-      }
-    } catch (e) {
-      debugPrint('Error: $e');
-    } finally {
-      setState(() {
-        _processing = false;
-      });
-    }
-
-    return null; // Return null if there was an error
-  }
-
-  Future<File> _resizeImage(String imagePath, int targetSize) async {
-    // Read the original image file
-    File imageFile = File(imagePath);
-
-    // Get the original image's dimensions
-    ImageProperties properties =
-        await FlutterNativeImage.getImageProperties(imagePath);
-    int originalWidth = properties.width!;
-    int originalHeight = properties.height!;
-
-    // Calculate the aspect ratio of the original image
-    double aspectRatio = originalWidth / originalHeight;
-
-    // Calculate the target width and height based on the target size and aspect ratio
-    int targetWidth = targetSize;
-    int targetHeight = (targetSize / aspectRatio).round();
-
-    // Resize the image using FlutterNativeImage
-    File resizedImage = await FlutterNativeImage.compressImage(
-      imageFile.path,
-      targetWidth: targetWidth,
-      targetHeight: targetHeight,
-    );
-
-    return resizedImage;
-  }
-
   void _onTakePhotoPressed() async {
     // Display an error if there's no network connection
     List<ConnectivityResult> connectivityResult =
@@ -226,8 +121,17 @@ class CameraScreenState extends State<CameraScreen>
         // Save the original image to the gallery
         await ImageGallerySaver.saveFile(image.path, name: filename);
 
+        debugPrint("REIMAGINED KEY: ${SettingsManager().getString('api_key')}");
+
         // Upload and process the image with Clipdrop's API
-        final reimaginedImage = await _uploadToClipDrop(image.path);
+        setState(() {
+          _processingStatus = 'Reimagining...';
+        });
+        final reimaginedImage = await ClipdropService.uploadToClipDrop(
+            mounted ? context : null, image.path);
+
+        debugPrint("REIMAGINED: $reimaginedImage");
+
         if (reimaginedImage != null) {
           // Save the reimagined image to the gallery
           await ImageGallerySaver.saveFile(reimaginedImage,
