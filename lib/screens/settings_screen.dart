@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:reimagine_cam/services/settings_manager.dart';
 
 class SettingsScreen extends StatelessWidget {
   static const String id = 'settings_screen';
@@ -18,8 +19,7 @@ class SettingsScreen extends StatelessWidget {
       context: context,
       builder: (context) {
         final TextEditingController controller =
-            //TextEditingController(text: _apiKey);
-            TextEditingController(text: '1234');
+            TextEditingController(text: SettingsManager().getString('api_key'));
         return AlertDialog(
           content: TextField(
             controller: controller,
@@ -37,8 +37,7 @@ class SettingsScreen extends StatelessWidget {
             ),
             TextButton(
               onPressed: () {
-                final String apiKey = controller.text;
-                //saveApiKey(apiKey);
+                SettingsManager().setString('api_key', controller.text);
                 Navigator.pop(context);
               },
               child: const Text('Save'),

@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:reimagine_cam/services/settings_manager.dart';
 
 import 'about_screen.dart';
 import 'preview_screen.dart';
@@ -11,7 +12,6 @@ import 'package:camera/camera.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter_native_image/flutter_native_image.dart';
@@ -34,27 +34,13 @@ class CameraScreenState extends State<CameraScreen>
   late final List<CameraDescription> _cameras;
   bool _processing = false;
   String _processingStatus = '';
-  late SharedPreferences _preferences;
-  String _apiKey = '';
 
   @override
   void initState() {
     super.initState();
-    initPreferences();
+    // initPreferences();
     WidgetsBinding.instance.addObserver(this);
     initCamera();
-  }
-
-  Future<void> initPreferences() async {
-    _preferences = await SharedPreferences.getInstance();
-    _apiKey = _preferences.getString('apiKey') ?? '';
-  }
-
-  Future<void> saveApiKey(String apiKey) async {
-    await _preferences.setString('apiKey', apiKey);
-    setState(() {
-      _apiKey = apiKey;
-    });
   }
 
   Future<void> initCamera() async {
@@ -114,19 +100,17 @@ class CameraScreenState extends State<CameraScreen>
       _processingStatus = 'Reimagining...';
     });
 
-    return downsizedImage.path;
+    //return downsizedImage.path;
 
     // URL of Clipdrop's Reimagine API
     String apiUrl = 'https://clipdrop-api.co/reimagine/v1/reimagine';
-    final String apiKey =
-        _apiKey.isNotEmpty ? _apiKey : 'xxxx'; // Default API key
 
     try {
       // Create a multipart request
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
       // Add the API key header
-      request.headers['x-api-key'] = apiKey;
+      request.headers['x-api-key'] = SettingsManager().getString('api_key');
 
       // Add the downsized image file
       request.files.add(
@@ -221,10 +205,9 @@ class CameraScreenState extends State<CameraScreen>
       return;
     }
 
-    if (_apiKey.isEmpty) {
+    if (SettingsManager().getString('api_key').isEmpty) {
       // Show a message to the user if API key is not entered
-      _showAlert(
-          'Please enter your Clipdrop API key in Settings before capturing a photo.');
+      _showAlert('Please enter a Clipdrop API key in Settings');
       return;
     }
 

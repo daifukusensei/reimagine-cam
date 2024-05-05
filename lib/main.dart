@@ -3,8 +3,13 @@ import 'package:reimagine_cam/screens/about_screen.dart';
 import 'package:reimagine_cam/screens/camera_screen.dart';
 import 'package:reimagine_cam/screens/preview_screen.dart';
 import 'package:reimagine_cam/screens/settings_screen.dart';
+import 'package:reimagine_cam/services/settings_manager.dart';
 
-void main() => runApp(const ReimagineCam());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await SettingsManager().init();
+  runApp(const ReimagineCam());
+}
 
 class ReimagineCam extends StatelessWidget {
   //TODO: ResolutionPreset.max is not working
