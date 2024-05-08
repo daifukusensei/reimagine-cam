@@ -1,17 +1,17 @@
 import 'dart:async';
 
+import 'package:camera/camera.dart';
+import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
+import 'package:image_gallery_saver/image_gallery_saver.dart';
+import 'package:intl/intl.dart';
+import 'package:reimagine_cam/services/camera_service.dart';
 import 'package:reimagine_cam/services/clipdrop_service.dart';
 import 'package:reimagine_cam/services/settings_manager.dart';
 
 import 'about_screen.dart';
 import 'preview_screen.dart';
 import 'settings_screen.dart';
-
-import 'package:camera/camera.dart';
-import 'package:image_gallery_saver/image_gallery_saver.dart';
-import 'package:connectivity_plus/connectivity_plus.dart';
-import 'package:intl/intl.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -23,70 +23,43 @@ class CameraScreen extends StatefulWidget {
 
 class CameraScreenState extends State<CameraScreen>
     with WidgetsBindingObserver {
-  CameraController? _controller;
+  late CameraService _cameraService;
   bool _isCameraInitialized = false;
   bool _isAboutButtonPressed = false;
   bool _isCaptureButtonPressed = false;
   bool _isSettingsButtonPressed = false;
-  late final List<CameraDescription> _cameras;
   bool _processing = false;
   String _processingStatus = '';
 
   @override
   void initState() {
     super.initState();
-    // initPreferences();
+    _cameraService = CameraService();
     WidgetsBinding.instance.addObserver(this);
     initCamera();
   }
 
   Future<void> initCamera() async {
-    _cameras = await availableCameras();
-    // Initialize the camera with the first camera in the list
-    await onNewCameraSelected(_cameras.first);
+    await _cameraService.initializeCamera();
+    setState(() {
+      _isCameraInitialized = true;
+    });
   }
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
-    // App state changed before we got the chance to initialize.
-    final CameraController? cameraController = _controller;
-
-    // App state changed before we got the chance to initialize.
-    if (cameraController == null || !cameraController.value.isInitialized) {
-      return;
-    }
-
     if (state == AppLifecycleState.inactive) {
-      // Free up memory when camera not active
-      cameraController.dispose();
+      _cameraService.disposeCamera();
     } else if (state == AppLifecycleState.resumed) {
-      // Reinitialize the camera with same properties
-      onNewCameraSelected(cameraController.description);
+      initCamera();
     }
   }
 
   @override
   void dispose() {
-    _controller?.dispose();
+    _cameraService.disposeCamera();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
-  }
-
-  Future<XFile?> capturePhoto() async {
-    final CameraController? cameraController = _controller;
-    if (cameraController!.value.isTakingPicture) {
-      return null;
-    }
-    try {
-      await _controller?.setFlashMode(FlashMode.auto);
-      final XFile picture = await cameraController.takePicture();
-      await _controller?.setFlashMode(FlashMode
-          .off); // There appears to be a bug in which flash remains lit after taking a picutre requiring it
-      return picture;
-    } on CameraException catch (e) {
-      debugPrint('Error occurred while taking picture: $e');
-      return null;
-    }
   }
 
   void _onTakePhotoPressed() async {
@@ -112,7 +85,7 @@ class CameraScreenState extends State<CameraScreen>
         _processingStatus = "Capturing...";
       });
 
-      final image = await capturePhoto();
+      final image = await _cameraService.capturePhoto();
       if (image != null) {
         String formattedDateTime =
             DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
@@ -178,8 +151,8 @@ class CameraScreenState extends State<CameraScreen>
       builder: (context, orientation) {
         if (_isCameraInitialized) {
           final aspectRatio = orientation == Orientation.landscape
-              ? _controller!.value.aspectRatio
-              : 1 / _controller!.value.aspectRatio;
+              ? _cameraService.controller!.value.aspectRatio
+              : 1 / _cameraService.controller!.value.aspectRatio;
 
           return SafeArea(
             child: Scaffold(
@@ -189,7 +162,7 @@ class CameraScreenState extends State<CameraScreen>
                   Center(
                     child: AspectRatio(
                       aspectRatio: aspectRatio,
-                      child: CameraPreview(_controller!),
+                      child: CameraPreview(_cameraService.controller!),
                     ),
                   ),
                   // Positioned widget for buttons
@@ -348,44 +321,5 @@ class CameraScreenState extends State<CameraScreen>
         }
       },
     );
-  }
-
-  Future<void> onNewCameraSelected(CameraDescription description) async {
-    final previousCameraController = _controller;
-
-    // Instantiating the camera controller
-    final CameraController cameraController = CameraController(
-      description,
-      ResolutionPreset.max,
-      imageFormatGroup: ImageFormatGroup.jpeg,
-    );
-
-    // Initialize controller
-    try {
-      await cameraController.initialize();
-    } on CameraException catch (e) {
-      debugPrint('Error initializing camera: $e');
-    }
-    // Dispose the previous controller
-    await previousCameraController?.dispose();
-
-    // Replace with the new controller
-    if (mounted) {
-      setState(() {
-        _controller = cameraController;
-      });
-    }
-
-    // Update UI if controller updated
-    cameraController.addListener(() {
-      if (mounted) setState(() {});
-    });
-
-    // Update the Boolean
-    if (mounted) {
-      setState(() {
-        _isCameraInitialized = _controller!.value.isInitialized;
-      });
-    }
   }
 }

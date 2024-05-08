@@ -2,8 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:reimagine_cam/services/settings_manager.dart';
 
 class SettingsScreen extends StatelessWidget {
-  static const String id = 'settings_screen';
   const SettingsScreen({super.key});
+  static const String id = 'settings_screen';
 
   @override
   Widget build(BuildContext context) {

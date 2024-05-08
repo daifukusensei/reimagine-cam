@@ -1,10 +1,11 @@
 import 'dart:io';
+
 import 'package:flutter/material.dart';
-import 'package:path_provider/path_provider.dart';
 import 'package:http/http.dart' as http;
-import 'package:reimagine_cam/services/settings_manager.dart';
+import 'package:path_provider/path_provider.dart';
 
 import 'image_processor.dart';
+import 'settings_manager.dart';
 
 class ClipdropService {
   static Future<void> _showAlert(BuildContext? context, String message,

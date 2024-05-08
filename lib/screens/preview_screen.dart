@@ -3,8 +3,8 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 
 class PreviewScreen extends StatefulWidget {
-  static const String id = 'preview_screen';
   const PreviewScreen({super.key});
+  static const String id = 'preview_screen';
 
   @override
   State<PreviewScreen> createState() => _PreviewPageState();
