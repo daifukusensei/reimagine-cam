@@ -7,33 +7,9 @@ import 'package:path_provider/path_provider.dart';
 import 'image_processor.dart';
 import 'settings_manager.dart';
 
-class ClipdropService {
-  static Future<void> _showAlert(BuildContext? context, String message,
-      [String? title]) async {
-    try {
-      showDialog(
-        context: context!,
-        builder: (BuildContext context) {
-          return AlertDialog(
-            title: title != null ? Text(title) : null,
-            content: Text(message),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () {
-                  Navigator.of(context).pop();
-                },
-                child: const Text('OK'),
-              ),
-            ],
-          );
-        },
-      );
-    } catch (e) {
-      // Handle any exception
-      debugPrint('Error showing alert: $e');
-    }
-  }
+import 'package:reimagine_cam/util/custom_alert_dialog.dart';
 
+class ClipdropService {
   static Future<String?> uploadToClipDrop(
       BuildContext? context, String imagePath) async {
     // URL of Clipdrop's Reimagine API
@@ -81,28 +57,28 @@ class ClipdropService {
       } else {
         // Handle different status codes
         if (response.statusCode == 400) {
-          await _showAlert(context!.mounted ? context : null,
-              'Request is malformed or incomplete', 'Clipdrop Error');
+          const CustomAlertDialog().show(
+              context, 'Request is malformed or incomplete', 'Clipdrop Error');
         } else if (response.statusCode == 401) {
-          await _showAlert(context!.mounted ? context : null, 'Missing API key',
-              'Clipdrop Error');
+          const CustomAlertDialog()
+              .show(context, 'Missing API key', 'Clipdrop Error');
         } else if (response.statusCode == 402) {
-          await _showAlert(context!.mounted ? context : null,
+          const CustomAlertDialog().show(context,
               'Your account has no remaining credits', 'Clipdrop Error');
         } else if (response.statusCode == 403) {
-          await _showAlert(context!.mounted ? context : null,
-              'Invalid or revoked API key', 'Clipdrop Error');
+          const CustomAlertDialog()
+              .show(context, 'Invalid or revoked API key', 'Clipdrop Error');
         } else if (response.statusCode == 429) {
-          await _showAlert(
-              context!.mounted ? context : null,
+          const CustomAlertDialog().show(
+              context,
               'Too many requests, blocked by the rate limiter',
               'Clipdrop Error');
         } else if (response.statusCode == 500) {
-          await _showAlert(context!.mounted ? context : null,
+          const CustomAlertDialog().show(context,
               'Server error, please try again later', 'Clipdrop Error');
         } else {
-          await _showAlert(context!.mounted ? context : null,
-              'An unexpected error occurred', 'Clipdrop Error');
+          const CustomAlertDialog()
+              .show(context, 'An unexpected error occurred', 'Clipdrop Error');
         }
       }
     } catch (e) {

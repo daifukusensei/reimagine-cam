@@ -5,13 +5,16 @@ import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
 import 'package:image_gallery_saver/image_gallery_saver.dart';
 import 'package:intl/intl.dart';
-import 'package:reimagine_cam/services/camera_service.dart';
-import 'package:reimagine_cam/services/clipdrop_service.dart';
-import 'package:reimagine_cam/services/settings_manager.dart';
 
 import 'about_screen.dart';
 import 'preview_screen.dart';
 import 'settings_screen.dart';
+
+import 'package:reimagine_cam/services/camera_service.dart';
+import 'package:reimagine_cam/services/clipdrop_service.dart';
+import 'package:reimagine_cam/services/settings_manager.dart';
+
+import 'package:reimagine_cam/util/custom_alert_dialog.dart';
 
 class CameraScreen extends StatefulWidget {
   const CameraScreen({super.key});
@@ -69,13 +72,15 @@ class CameraScreenState extends State<CameraScreen>
     if (!connectivityResult.contains(ConnectivityResult.mobile) &&
         !connectivityResult.contains(ConnectivityResult.wifi) &&
         !connectivityResult.contains(ConnectivityResult.ethernet)) {
-      _showAlert('Please check your internet connection.', 'Network Error');
+      const CustomAlertDialog().show(mounted ? context : null,
+          'Please check your internet connection.', 'Network Error');
       return;
     }
 
     if (SettingsManager().getString('api_key').isEmpty) {
       // Show a message to the user if API key is not entered
-      _showAlert('Please enter a Clipdrop API key in Settings');
+      const CustomAlertDialog().show(
+          mounted ? context : null, 'Please enter an API key in Settings');
       return;
     }
 
@@ -123,26 +128,6 @@ class CameraScreenState extends State<CameraScreen>
         _processing = false;
       });
     }
-  }
-
-  void _showAlert(String message, [String? title]) {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: title != null ? Text(title) : null,
-          content: Text(message),
-          actions: <Widget>[
-            TextButton(
-              onPressed: () {
-                Navigator.of(context).pop();
-              },
-              child: const Text('OK'),
-            ),
-          ],
-        );
-      },
-    );
   }
 
   @override
