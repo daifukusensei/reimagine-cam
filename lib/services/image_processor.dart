@@ -1,6 +1,8 @@
 import 'dart:io';
+import 'dart:typed_data';
 
 import 'package:flutter_native_image/flutter_native_image.dart';
+import 'package:image/image.dart' as img;
 
 class ImageProcessor {
   static Future<File> resizeImage(String imagePath, int targetSize) async {
@@ -28,5 +30,39 @@ class ImageProcessor {
     );
 
     return resizedImage;
+  }
+
+  static Future<File> convertJpgToPng(String jpgImagePath) async {
+    // Read the JPG image
+    List<int> imageBytes = await File(jpgImagePath).readAsBytes();
+
+    // Decode the JPG image
+    img.Image? image = img.decodeImage(Uint8List.fromList(imageBytes))!;
+
+    // Encode the image as PNG
+    List<int> pngBytes = img.encodePng(image);
+
+    // Write the PNG image to a new file
+    File pngImage = File(jpgImagePath.replaceAll(RegExp(r'\.jpg$'), '.png'));
+    await pngImage.writeAsBytes(pngBytes);
+
+    return pngImage;
+  }
+
+  static Future<File> convertPngToJpg(String pngImagePath) async {
+    // Read the PNG image
+    List<int> imageBytes = await File(pngImagePath).readAsBytes();
+
+    // Decode the PNG image
+    img.Image image = img.decodeImage(Uint8List.fromList(imageBytes))!;
+
+    // Encode the image as JPG
+    List<int> jpgBytes = img.encodeJpg(image);
+
+    // Write the JPG image to a new file
+    File jpgImage = File(pngImagePath.replaceAll(RegExp(r'\.png$'), '.jpg'));
+    await jpgImage.writeAsBytes(jpgBytes);
+
+    return jpgImage;
   }
 }

@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -11,71 +12,95 @@ import 'package:reimagine_cam/util/custom_alert_dialog.dart';
 
 class Dalle2Service {
   static Future<String?> upload(BuildContext? context, String imagePath) async {
-    // URL of Clipdrop's Reimagine API
-    String apiUrl = 'https://clipdrop-api.co/reimagine/v1/reimagine';
+    // URL of DALL·E 2's Variation API
+    String apiUrl = 'https://api.openai.com/v1/images/variations';
 
     try {
       // Resize the image to fit within a 1024x1024 bounding box while preserving aspect ratio
       final File downsizedImage =
           await ImageProcessor.resizeImage(imagePath, 1024);
 
+      // Convert to PNG, required by DALL·E 2
+      final File pngImage =
+          await ImageProcessor.convertJpgToPng(downsizedImage.path);
+
       // Create a multipart request
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
       // Add the API key header
-      request.headers['x-api-key'] =
-          SettingsManager().getString('clipdrop_api_key');
+      request.headers['Authorization'] =
+          'Bearer ${SettingsManager().getString('dalle2_api_key')}';
 
       // Add the downsized image file
-      request.files.add(
-          await http.MultipartFile.fromPath('image_file', downsizedImage.path));
+      request.files
+          .add(await http.MultipartFile.fromPath('image', pngImage.path));
 
       // Send the request
       var response = await request.send();
 
-      // debugPrint("REIMAGINED RESPONSE: " + response.statusCode.toString());
-      // return downsizedImage.path;
+      // debugPrint("REIMAGINED RESPONSE: ${response.statusCode}");
+      // return pngImage.path;
 
       // Process reimagined image if the response is successful
       if (response.statusCode == 200) {
-        // Read response bytes
-        List<int> bytes =
-            await response.stream.expand((chunk) => chunk).toList();
+        // Parse the response body
+        var responseBody = await response.stream.bytesToString();
+        var responseData = jsonDecode(responseBody);
 
-        // Get the temporary directory
-        final Directory tempDir = await getTemporaryDirectory();
+        // Extract the URL of the image from the response data
+        String imageUrl = responseData['data'][0]['url'];
 
-        // Generate a unique filename using the current timestamp
-        String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-        var outputFile = File('${tempDir.path}/output_$timestamp.jpg');
+        // Download the image from the URL
+        var imageResponse = await http.get(Uri.parse(imageUrl));
 
-        // Save the response as a file in the temporary directory
-        await outputFile.writeAsBytes(bytes);
+        // Check if the request to download the image was successful
+        if (imageResponse.statusCode == 200) {
+          // Get the temporary directory
+          final Directory tempDir = await getTemporaryDirectory();
 
-        // Return the path of the saved image
-        return outputFile.path;
+          // Generate a unique filename using the current timestamp
+          String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
+          var outputFile = File('${tempDir.path}/output_$timestamp.png');
+
+          // Save the downloaded image as a file in the temporary directory
+          await outputFile.writeAsBytes(imageResponse.bodyBytes);
+
+          // Convert output to JPG
+          final File jpgFile =
+              await ImageProcessor.convertPngToJpg(outputFile.path);
+
+          // Return the path of the saved image
+          return jpgFile.path;
+        } else {
+          const CustomAlertDialog()
+              .show(context, 'An unexpected error occurred', 'DALL·E 2 Error');
+          return null;
+        }
       } else {
         // Handle different status codes
-        if (response.statusCode == 400) {
+        if (response.statusCode == 401) {
           const CustomAlertDialog().show(
-              context, 'Request is malformed or incomplete', 'DALL·E 2 Error');
-        } else if (response.statusCode == 401) {
-          const CustomAlertDialog()
-              .show(context, 'Missing API key', 'DALL·E 2 Error');
-        } else if (response.statusCode == 402) {
-          const CustomAlertDialog().show(context,
-              'Your account has no remaining credits', 'DALL·E 2 Error');
+              context,
+              'Invalid authentication, incorrect API key provided, or you must be a member of an organization to use the API',
+              'DALL·E 2 Error');
         } else if (response.statusCode == 403) {
-          const CustomAlertDialog()
-              .show(context, 'Invalid or revoked API key', 'DALL·E 2 Error');
+          const CustomAlertDialog().show(context,
+              'Country, region, or territory not supported', 'DALL·E 2 Error');
         } else if (response.statusCode == 429) {
           const CustomAlertDialog().show(
               context,
-              'Too many requests, blocked by the rate limiter',
+              'You exceeded your current quota, or the rate limit was reached for requests',
               'DALL·E 2 Error');
         } else if (response.statusCode == 500) {
-          const CustomAlertDialog().show(context,
-              'Server error, please try again later', 'DALL·E 2 Error');
+          const CustomAlertDialog().show(
+              context,
+              'The server had an error while processing your request',
+              'DALL·E 2 Error');
+        } else if (response.statusCode == 503) {
+          const CustomAlertDialog().show(
+              context,
+              'The engine is currently overloaded, please try again later',
+              'DALL·E 2 Error');
         } else {
           const CustomAlertDialog()
               .show(context, 'An unexpected error occurred', 'DALL·E 2 Error');

@@ -13,6 +13,11 @@ class SettingsManager {
 
   Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+    // Set default option if none is selected
+    if (getString('engine').isEmpty) {
+      // Update settings with default option
+      SettingsManager().setString('engine', 'dalle2');
+    }
   }
 
   String getString(String key, {String defaultValue = ''}) {

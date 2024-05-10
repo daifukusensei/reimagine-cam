@@ -33,21 +33,20 @@ class ClipdropService {
       // Send the request
       var response = await request.send();
 
-      // debugPrint("REIMAGINED RESPONSE: " + response.statusCode.toString());
+      // debugPrint("REIMAGINED RESPONSE: ${response.statusCode}");
       // return downsizedImage.path;
 
       // Process reimagined image if the response is successful
       if (response.statusCode == 200) {
         // Read response bytes
-        List<int> bytes =
-            await response.stream.expand((chunk) => chunk).toList();
+        List<int> bytes = await response.stream.toBytes();
 
         // Get the temporary directory
         final Directory tempDir = await getTemporaryDirectory();
 
         // Generate a unique filename using the current timestamp
         String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
-        var outputFile = File('${tempDir.path}/output_$timestamp.jpg');
+        var outputFile = File('${tempDir.path}/output_$timestamp.png');
 
         // Save the response as a file in the temporary directory
         await outputFile.writeAsBytes(bytes);
