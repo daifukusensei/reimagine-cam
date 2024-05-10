@@ -9,7 +9,7 @@ import 'settings_manager.dart';
 
 import 'package:reimagine_cam/util/custom_alert_dialog.dart';
 
-class ClipdropService {
+class Dalle2Service {
   static Future<String?> upload(BuildContext? context, String imagePath) async {
     // URL of Clipdrop's Reimagine API
     String apiUrl = 'https://clipdrop-api.co/reimagine/v1/reimagine';
@@ -58,27 +58,27 @@ class ClipdropService {
         // Handle different status codes
         if (response.statusCode == 400) {
           const CustomAlertDialog().show(
-              context, 'Request is malformed or incomplete', 'Clipdrop Error');
+              context, 'Request is malformed or incomplete', 'DALL·E 2 Error');
         } else if (response.statusCode == 401) {
           const CustomAlertDialog()
-              .show(context, 'Missing API key', 'Clipdrop Error');
+              .show(context, 'Missing API key', 'DALL·E 2 Error');
         } else if (response.statusCode == 402) {
           const CustomAlertDialog().show(context,
-              'Your account has no remaining credits', 'Clipdrop Error');
+              'Your account has no remaining credits', 'DALL·E 2 Error');
         } else if (response.statusCode == 403) {
           const CustomAlertDialog()
-              .show(context, 'Invalid or revoked API key', 'Clipdrop Error');
+              .show(context, 'Invalid or revoked API key', 'DALL·E 2 Error');
         } else if (response.statusCode == 429) {
           const CustomAlertDialog().show(
               context,
               'Too many requests, blocked by the rate limiter',
-              'Clipdrop Error');
+              'DALL·E 2 Error');
         } else if (response.statusCode == 500) {
           const CustomAlertDialog().show(context,
-              'Server error, please try again later', 'Clipdrop Error');
+              'Server error, please try again later', 'DALL·E 2 Error');
         } else {
           const CustomAlertDialog()
-              .show(context, 'An unexpected error occurred', 'Clipdrop Error');
+              .show(context, 'An unexpected error occurred', 'DALL·E 2 Error');
         }
       }
     } catch (e) {

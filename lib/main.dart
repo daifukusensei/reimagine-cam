@@ -31,7 +31,7 @@ class ReimagineCam extends StatelessWidget {
         AboutScreen.id: (context) => const AboutScreen(),
         CameraScreen.id: (context) => const CameraScreen(),
         PreviewScreen.id: (context) => const PreviewScreen(),
-        SettingsScreen.id: (context) => const SettingsScreen(),
+        SettingsScreen.id: (context) => const SettingsScreen()
       },
     );
   }

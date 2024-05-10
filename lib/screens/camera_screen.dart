@@ -12,6 +12,7 @@ import 'settings_screen.dart';
 
 import 'package:reimagine_cam/services/camera_service.dart';
 import 'package:reimagine_cam/services/clipdrop_service.dart';
+import 'package:reimagine_cam/services/dalle2_service.dart';
 import 'package:reimagine_cam/services/settings_manager.dart';
 
 import 'package:reimagine_cam/util/custom_alert_dialog.dart';
@@ -77,8 +78,11 @@ class CameraScreenState extends State<CameraScreen>
       return;
     }
 
-    if (SettingsManager().getString('api_key').isEmpty) {
-      // Show a message to the user if API key is not entered
+    if ((SettingsManager().getString('engine') == 'clipdrop' &&
+            SettingsManager().getString('clipdrop_api_key').isEmpty) ||
+        (SettingsManager().getString('engine') == 'dalle2' &&
+            SettingsManager().getString('dalle2_api_key').isEmpty)) {
+      // Show a message to the user if no API key is specified
       const CustomAlertDialog().show(
           mounted ? context : null, 'Please enter an API key in Settings');
       return;
@@ -105,8 +109,10 @@ class CameraScreenState extends State<CameraScreen>
         setState(() {
           _processingStatus = 'Reimagining...';
         });
-        final reimaginedImage = await ClipdropService.uploadToClipDrop(
-            mounted ? context : null, image.path);
+        final reimaginedImage = SettingsManager().getString('engine') ==
+                'clipdrop'
+            ? await ClipdropService.upload(mounted ? context : null, image.path)
+            : await Dalle2Service.upload(mounted ? context : null, image.path);
 
         debugPrint("REIMAGINED: $reimaginedImage");
 
