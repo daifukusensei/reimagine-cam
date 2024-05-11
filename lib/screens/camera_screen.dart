@@ -22,10 +22,10 @@ class CameraScreen extends StatefulWidget {
   static const String id = 'camera_screen';
 
   @override
-  CameraScreenState createState() => CameraScreenState();
+  State<CameraScreen> createState() => _CameraScreenState();
 }
 
-class CameraScreenState extends State<CameraScreen>
+class _CameraScreenState extends State<CameraScreen>
     with WidgetsBindingObserver {
   late CameraService _cameraService;
   bool _isCameraInitialized = false;

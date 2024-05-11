@@ -6,10 +6,10 @@ class SettingsScreen extends StatefulWidget {
   static const String id = 'settings_screen';
 
   @override
-  SettingsScreenState createState() => SettingsScreenState();
+  State<SettingsScreen> createState() => _SettingsScreenState();
 }
 
-class SettingsScreenState extends State<SettingsScreen> {
+class _SettingsScreenState extends State<SettingsScreen> {
   late TextEditingController dalle2Controller;
   late TextEditingController clipdropController;
   late String selectedOption;

@@ -1,46 +1,45 @@
+import 'dart:async';
 import 'dart:io';
-import 'dart:typed_data';
 
-import 'package:flutter_native_image/flutter_native_image.dart';
+import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
 
 class ImageProcessor {
   static Future<File> resizeImage(String imagePath, int targetSize) async {
-    // Read the original image file
-    File imageFile = File(imagePath);
+    return await compute(
+        _resizeImageIsolate, _ResizeImageParams(imagePath, targetSize));
+  }
 
-    // Get the original image's dimensions
-    ImageProperties properties =
-        await FlutterNativeImage.getImageProperties(imagePath);
-    int originalWidth = properties.width!;
-    int originalHeight = properties.height!;
+  static Future<File> _resizeImageIsolate(_ResizeImageParams params) async {
+    final image = File(params.imagePath);
+    final rawImage = img.decodeImage(await image.readAsBytes());
 
-    // Calculate the aspect ratio of the original image
-    double aspectRatio = originalWidth / originalHeight;
+    img.Image resizedImage;
+    if (rawImage!.width > rawImage.height) {
+      resizedImage = img.copyResize(rawImage, width: params.targetSize);
+    } else {
+      resizedImage = img.copyResize(rawImage, height: params.targetSize);
+    }
 
-    // Calculate the target width and height based on the target size and aspect ratio
-    int targetWidth = targetSize;
-    int targetHeight = (targetSize / aspectRatio).round();
+    File resizedImageFile = File(params.imagePath);
+    await resizedImageFile.writeAsBytes(img.encodeJpg(resizedImage));
 
-    // Resize the image using FlutterNativeImage
-    File resizedImage = await FlutterNativeImage.compressImage(
-      imageFile.path,
-      targetWidth: targetWidth,
-      targetHeight: targetHeight,
-    );
-
-    return resizedImage;
+    return resizedImageFile;
   }
 
   static Future<File> convertJpgToPng(String jpgImagePath) async {
+    return await compute(_convertJpgToPngIsolate, jpgImagePath);
+  }
+
+  static Future<File> _convertJpgToPngIsolate(String jpgImagePath) async {
     // Read the JPG image
     List<int> imageBytes = await File(jpgImagePath).readAsBytes();
 
     // Decode the JPG image
-    img.Image? image = img.decodeImage(Uint8List.fromList(imageBytes))!;
+    img.Image? image = img.decodeImage(Uint8List.fromList(imageBytes));
 
     // Encode the image as PNG
-    List<int> pngBytes = img.encodePng(image);
+    List<int> pngBytes = img.encodePng(image!);
 
     // Write the PNG image to a new file
     File pngImage = File(jpgImagePath.replaceAll(RegExp(r'\.jpg$'), '.png'));
@@ -50,6 +49,10 @@ class ImageProcessor {
   }
 
   static Future<File> convertPngToJpg(String pngImagePath) async {
+    return await compute(_convertPngToJpgIsolate, pngImagePath);
+  }
+
+  static Future<File> _convertPngToJpgIsolate(String pngImagePath) async {
     // Read the PNG image
     List<int> imageBytes = await File(pngImagePath).readAsBytes();
 
@@ -65,4 +68,11 @@ class ImageProcessor {
 
     return jpgImage;
   }
+}
+
+class _ResizeImageParams {
+  final String imagePath;
+  final int targetSize;
+
+  _ResizeImageParams(this.imagePath, this.targetSize);
 }
