@@ -1,16 +1,20 @@
-# reimagine_cam
+# Reimagine Cam
+<p align="center">
+  <img src="./assets/images/reimagine_cam.png"  width="70"/>
+</p>
 
-A new Flutter project.
+Reimagine Cam is a Flutter-based camera application that leverages generative AI image models to create artistic reinterpretations of photos when captured.
 
-## Getting Started
+Take a photo using Reimagine Cam, and an AI "reimagined" version of that photo will be displayed and saved to your device's image gallery.
 
-This project is a starting point for a Flutter application.
+It currently supports DALL·E 2's [variations](https://platform.openai.com/docs/api-reference/images/create-variation) and Clipdrop's [Reimagine](https://clipdrop.co/apis/docs/reimagine) APIs.
 
-A few resources to get you started if this is your first Flutter project:
+## Requirements
+- [Flutter](https://flutter.dev/), to build Reimagine Cam from this repository
+- Either an OpenAI or Clipdrop API key (or both) with available credits
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## Usage
+1. Build then launch Reimagine Cam on your device
+2. Press the Settings (gear) button to select your desired AI model, entering its respective API key
+3. Press the camera button to capture a photo, which will then be reimagined by the AI model specified in Settings and previewed on screen
+4. Both the original photo and its AI-reimagined version are saved to the device's image gallery
