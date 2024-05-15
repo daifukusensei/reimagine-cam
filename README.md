@@ -7,7 +7,7 @@ Reimagine Cam is a Flutter-based camera application that leverages generative AI
 
 Take a photo using Reimagine Cam, and an AI "reimagined" version of that photo will be displayed and saved to your device's image gallery.
 
-It currently supports DALL·E 2's [variations](https://platform.openai.com/docs/api-reference/images/create-variation) and Clipdrop's [Reimagine](https://clipdrop.co/apis/docs/reimagine) APIs.
+It currently supports DALL-E 2's [variations](https://platform.openai.com/docs/api-reference/images/create-variation) and Clipdrop's [Reimagine](https://clipdrop.co/apis/docs/reimagine) APIs.
 
 ## Requirements
 - [Flutter](https://flutter.dev/), to build Reimagine Cam from this repository
