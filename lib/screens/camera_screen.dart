@@ -14,6 +14,7 @@ import 'settings_screen.dart';
 import 'package:reimagine_cam/services/camera_service.dart';
 import 'package:reimagine_cam/services/clipdrop_service.dart';
 import 'package:reimagine_cam/services/dalle2_service.dart';
+import 'package:reimagine_cam/services/image_processor.dart';
 import 'package:reimagine_cam/services/settings_manager.dart';
 
 import 'package:reimagine_cam/util/custom_alert_dialog.dart';
@@ -156,6 +157,7 @@ class _CameraScreenState extends State<CameraScreen>
               reimaginedImage.endsWith('.png') ? 'png' : 'jpg';
           String filename =
               'Reimagine_Cam_${formattedDateTime}_reimagined.$fileExtension';
+
           await ImageGallerySaver.saveFile(reimaginedImage, name: filename);
 
           // Perform a check before using the context to display the reimagined image
@@ -164,6 +166,9 @@ class _CameraScreenState extends State<CameraScreen>
             await navigator.pushNamed(PreviewScreen.id,
                 arguments: reimaginedImage);
           }
+
+          // Delete all cached image files not saved to Gallery
+          await ImageProcessor.deleteAllTempFiles();
         }
       }
     } finally {

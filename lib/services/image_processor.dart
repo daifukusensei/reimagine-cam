@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:flutter/foundation.dart';
 import 'package:image/image.dart' as img;
+import 'package:path_provider/path_provider.dart';
 
 class ImageProcessor {
   static Future<File> resizeImage(String imagePath, int targetSize) async {
@@ -48,25 +49,50 @@ class ImageProcessor {
     return pngImage;
   }
 
-  static Future<File> convertPngToJpg(String pngImagePath) async {
-    return await compute(_convertPngToJpgIsolate, pngImagePath);
+  static Future<List<FileSystemEntity>> listAllTempFiles() async {
+    try {
+      // Get the app's cache directory
+      final directory = await getApplicationCacheDirectory();
+
+      // List all files in directory
+      final files = directory.listSync();
+
+      // Print file names to console
+      for (var file in files) {
+        debugPrint(file.path);
+      }
+
+      return files;
+    } catch (e) {
+      debugPrint("Error accessing cache directory: $e");
+      return [];
+    }
   }
 
-  static Future<File> _convertPngToJpgIsolate(String pngImagePath) async {
-    // Read the PNG image
-    List<int> imageBytes = await File(pngImagePath).readAsBytes();
+  static Future<void> deleteAllTempFiles() async {
+    try {
+      // Get the app's cache directory
+      final directory = await getApplicationCacheDirectory();
 
-    // Decode the PNG image
-    img.Image image = img.decodeImage(Uint8List.fromList(imageBytes))!;
+      // List all files in directory
+      final files = directory.listSync();
 
-    // Encode the image as JPG
-    List<int> jpgBytes = img.encodeJpg(image);
-
-    // Write the JPG image to a new file
-    File jpgImage = File(pngImagePath.replaceAll(RegExp(r'\.png$'), '.jpg'));
-    await jpgImage.writeAsBytes(jpgBytes);
-
-    return jpgImage;
+      // Iterate and delete each file
+      for (var file in files) {
+        try {
+          if (file is File) {
+            await file.delete();
+          } else if (file is Directory) {
+            await file.delete(recursive: true);
+          }
+        } catch (e) {
+          debugPrint("Error deleting file: $e");
+        }
+      }
+      debugPrint("All cached files deleted successfully.");
+    } catch (e) {
+      debugPrint("Error accessing cache directory: $e");
+    }
   }
 }
 
