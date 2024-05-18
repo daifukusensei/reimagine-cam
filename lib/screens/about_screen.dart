@@ -34,24 +34,3 @@ class AboutScreen extends StatelessWidget {
     });
   }
 }
-
-  // void _showAboutDialog(BuildContext context) {
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return AboutDialog(
-  //         applicationName: "Reimagine Cam",
-  //         applicationIcon: SizedBox(
-  //           width: 70,
-  //           height: 70,
-  //           child: Image.asset('assets/images/reimagine_cam.png'),
-  //         ),
-  //         applicationVersion: "1.0",
-  //         applicationLegalese: "04/2024, by daifuku",
-  //       );
-  //     },
-  //   ).then((_) {
-  //     // After the dialog is dismissed, pop the AboutScreen
-  //     Navigator.pop(context);
-  //   });
-  // }

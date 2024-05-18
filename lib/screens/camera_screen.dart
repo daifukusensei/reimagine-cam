@@ -1,5 +1,6 @@
 import 'dart:async';
 
+import 'package:audioplayers/audioplayers.dart';
 import 'package:camera/camera.dart';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:flutter/material.dart';
@@ -26,14 +27,17 @@ class CameraScreen extends StatefulWidget {
 }
 
 class _CameraScreenState extends State<CameraScreen>
-    with WidgetsBindingObserver {
+    with WidgetsBindingObserver, SingleTickerProviderStateMixin {
   late CameraService _cameraService;
   bool _isCameraInitialized = false;
   bool _isAboutButtonPressed = false;
   bool _isCaptureButtonPressed = false;
   bool _isSettingsButtonPressed = false;
   bool _processing = false;
+  bool _isFlashVisible = false;
   String _processingStatus = '';
+  late AnimationController _animationController;
+  late AudioPlayer _audioPlayer;
 
   @override
   void initState() {
@@ -41,6 +45,14 @@ class _CameraScreenState extends State<CameraScreen>
     _cameraService = CameraService();
     WidgetsBinding.instance.addObserver(this);
     initCamera();
+
+    _animationController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 100),
+    );
+
+    _audioPlayer = AudioPlayer();
+    _audioPlayer.setReleaseMode(ReleaseMode.stop);
   }
 
   Future<void> initCamera() async {
@@ -62,8 +74,25 @@ class _CameraScreenState extends State<CameraScreen>
   @override
   void dispose() {
     _cameraService.disposeCamera();
+    _animationController.dispose();
+    _audioPlayer.dispose();
     WidgetsBinding.instance.removeObserver(this);
     super.dispose();
+  }
+
+  Future<void> _flashAndPlaySound() async {
+    // Play shutter sound
+    await _audioPlayer.play(AssetSource('sounds/shutter_sound.mp3'));
+
+    // Flash screen
+    setState(() {
+      _isFlashVisible = true;
+    });
+
+    await _animationController.forward(from: 0);
+    setState(() {
+      _isFlashVisible = false;
+    });
   }
 
   void _onTakePhotoPressed() async {
@@ -95,7 +124,11 @@ class _CameraScreenState extends State<CameraScreen>
       });
 
       final image = await _cameraService.capturePhoto();
+
       if (image != null) {
+        // Flash screen and play sound to indicate a photo was captured
+        await _flashAndPlaySound();
+
         String formattedDateTime =
             DateFormat('yyyy-MM-dd_HH-mm-ss').format(DateTime.now());
         String filename = 'Reimagine_Cam_${formattedDateTime}_original.jpg';
@@ -109,6 +142,7 @@ class _CameraScreenState extends State<CameraScreen>
         setState(() {
           _processingStatus = 'Reimagining...';
         });
+
         final reimaginedImage = SettingsManager().getString('engine') ==
                 'clipdrop'
             ? await ClipdropService.upload(mounted ? context : null, image.path)
@@ -118,8 +152,11 @@ class _CameraScreenState extends State<CameraScreen>
 
         if (reimaginedImage != null) {
           // Save the reimagined image to the gallery
-          await ImageGallerySaver.saveFile(reimaginedImage,
-              name: 'Reimagine_Cam_${formattedDateTime}_reimagined.jpg');
+          String fileExtension =
+              reimaginedImage.endsWith('.png') ? 'png' : 'jpg';
+          String filename =
+              'Reimagine_Cam_${formattedDateTime}_reimagined.$fileExtension';
+          await ImageGallerySaver.saveFile(reimaginedImage, name: filename);
 
           // Perform a check before using the context to display the reimagined image
           if (mounted) {
@@ -281,6 +318,12 @@ class _CameraScreenState extends State<CameraScreen>
                       ],
                     ),
                   ),
+                  if (_isFlashVisible)
+                    Positioned.fill(
+                      child: Container(
+                        color: Colors.white.withOpacity(0.8),
+                      ),
+                    ),
                   if (_processing)
                     // Overlay to "dim" the screen during processing
                     Positioned.fill(

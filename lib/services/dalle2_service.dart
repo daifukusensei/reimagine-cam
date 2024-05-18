@@ -24,6 +24,8 @@ class Dalle2Service {
       final File pngImage =
           await ImageProcessor.convertJpgToPng(downsizedImage.path);
 
+      // return pngImage.path;
+
       // Create a multipart request
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
@@ -37,9 +39,6 @@ class Dalle2Service {
 
       // Send the request
       var response = await request.send();
-
-      // debugPrint("REIMAGINED RESPONSE: ${response.statusCode}");
-      // return pngImage.path;
 
       // Process reimagined image if the response is successful
       if (response.statusCode == 200) {
@@ -65,12 +64,8 @@ class Dalle2Service {
           // Save the downloaded image as a file in the temporary directory
           await outputFile.writeAsBytes(imageResponse.bodyBytes);
 
-          // Convert output to JPG
-          final File jpgFile =
-              await ImageProcessor.convertPngToJpg(outputFile.path);
-
           // Return the path of the saved image
-          return jpgFile.path;
+          return outputFile.path;
         } else {
           const CustomAlertDialog()
               .show(context, 'An unexpected error occurred', 'DALL·E 2 Error');

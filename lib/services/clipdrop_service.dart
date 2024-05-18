@@ -19,6 +19,8 @@ class ClipdropService {
       final File downsizedImage =
           await ImageProcessor.resizeImage(imagePath, 1024);
 
+      // return downsizedImage.path;
+
       // Create a multipart request
       var request = http.MultipartRequest('POST', Uri.parse(apiUrl));
 
@@ -32,9 +34,6 @@ class ClipdropService {
 
       // Send the request
       var response = await request.send();
-
-      // debugPrint("REIMAGINED RESPONSE: ${response.statusCode}");
-      // return downsizedImage.path;
 
       // Process reimagined image if the response is successful
       if (response.statusCode == 200) {

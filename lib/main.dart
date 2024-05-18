@@ -15,9 +15,10 @@ void main() async {
 
 class ReimagineCam extends StatelessWidget {
   //TODO: ResolutionPreset.max is not working
-  //TODO: move to OpenAI
   //TODO: add GitHub link in About
-  //TODO: capture sound? flash screen instead of displaying status of capturing?
+  //TODO: delete temp files from app's local directory
+  //TODO: use buttons rather than InkWells to simplify code
+  //TODO: move both About and Settings button to popup menu
   const ReimagineCam({super.key});
 
   @override
